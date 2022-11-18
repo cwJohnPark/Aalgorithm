@@ -27,46 +27,46 @@ public class EndToEnd {
     }
 
     public int[] solution(int n, String[] words) {
-        Participants participants = Participants.of(n);
+        Users users = Users.of(n);
 
-        Participant participant = participants.findFailer(words);
+        User user = users.findFailer(words);
     }
 
-    static class Participants {
-        List<Participant> participantsList;
+    static class Users {
+        List<User> participantsList;
 
-        public Participants(List<Participant> participantsList) {
+        public Users(List<User> participantsList) {
             this.participantsList = participantsList;
         }
 
-        public static Participants of(int n) {
-            return new Participants(
+        public static Users of(int n) {
+            return new Users(
                     IntStream.range(0, n)
-                        .mapToObj(Participant::new)
+                        .mapToObj(User::new)
                         .collect(Collectors.toList()));
 
         }
 
-        public Participant findFailer(String[] words) {
+        public User findFailer(String[] words) {
             for (int i = 0; i < words.length; i++) {
                 String word = words[i];
                 int participantOrder = participantsList.size() % i;
-                Participant participant = participantsList.get(participantOrder);
-                participant.addWords(word);
-                if (participant.isFailed()) {
-                    return participant;
+                User user = participantsList.get(participantOrder);
+                user.addWords(word);
+                if (user.isFailed()) {
+                    return user;
                 }
             }
-            return Participant.NONE;
+            return User.NONE;
         }
     }
 
-    static class Participant {
-        static final Participant NONE = new Participant(0);
+    static class User {
+        static final User NONE = new User(0);
         int order;
         Set<String> words = new HashSet<>();
 
-        public Participant(int order) {
+        public User(int order) {
             this.order = order;
         }
 

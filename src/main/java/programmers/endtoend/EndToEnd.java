@@ -1,9 +1,8 @@
 package programmers.endtoend;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -27,55 +26,113 @@ public class EndToEnd {
     }
 
     public int[] solution(int n, String[] words) {
-        Participants participants = Participants.of(n);
+        Users users = Users.of(n, words);
 
-        Participant participant = participants.findFailer(words);
+        return users.findDropout();
     }
 
-    static class Participants {
-        List<Participant> participantsList;
+    static class Users {
+        List<User> userList;
+        final int totalCount;
 
-        public Participants(List<Participant> participantsList) {
-            this.participantsList = participantsList;
+        public Users(List<User> userList, int totalCount) {
+            this.userList = userList;
+            this.totalCount = totalCount;
         }
 
-        public static Participants of(int n) {
-            return new Participants(
-                    IntStream.range(0, n)
-                        .mapToObj(Participant::new)
-                        .collect(Collectors.toList()));
+        public static Users of(int n, String[] words) {
+            List<User> users = IntStream.range(0, n)
+                    .mapToObj(User::new).collect(Collectors.toList());
 
-        }
-
-        public Participant findFailer(String[] words) {
             for (int i = 0; i < words.length; i++) {
-                String word = words[i];
-                int participantOrder = participantsList.size() % i;
-                Participant participant = participantsList.get(participantOrder);
-                participant.addWords(word);
-                if (participant.isFailed()) {
-                    return participant;
+                User user = users.get(i % n);
+                user.addWord(words[i]);
+            }
+            return new Users(users, words.length);
+        }
+
+        public int[] findDropout() {
+            int userCount = userList.size();
+            int totalRound = totalCount / userCount;
+            Words previousAllWords = new Words();
+            for (int round = 0; round < totalRound; round++) {
+                for (User user : userList) {
+                    boolean isSuccess = user.matchRoundOf(round, previousAllWords);
+                    if (!isSuccess) {
+                        return new int[]{user.sequence+1, round+1};
+                    }
                 }
             }
-            return Participant.NONE;
+            return new int[] {0,0};
         }
+
     }
 
-    static class Participant {
-        static final Participant NONE = new Participant(0);
-        int order;
-        Set<String> words = new HashSet<>();
+    static class User {
+        static final User NONE = new User(0);
+        int sequence;
+        Words words = new Words();
 
-        public Participant(int order) {
-            this.order = order;
+        public User(int sequence) {
+            this.sequence = sequence;
         }
 
-        public void addWords(String word) {
+        public void addWord(String word) {
             words.add(word);
         }
 
-        public boolean isFailed() {
-            words
+        public List<String> getWordList() {
+            return words.wordList;
+        }
+
+        public boolean matchRoundOf(int round, Words previousWords) {
+            String word = words.getRoundOf(round);
+            boolean isMatched = previousWords.match(word);
+            previousWords.add(word);
+            return isMatched;
+        }
+    }
+
+    static class Words {
+        List<String> wordList = new ArrayList<>();
+
+        public Words() {
+        }
+
+        public Words(List<String> wordList) {
+            this.wordList = wordList;
+        }
+
+        public static Words of(String ...words) {
+            return new Words(Arrays.stream(words).collect(Collectors.toList()));
+        }
+
+        public boolean match(String word) {
+            if (wordList.isEmpty()) {
+                return true;
+            }
+            return isEndToEnd(word) && isNotRedundant(word);
+        }
+
+        private boolean isNotRedundant(String word) {
+            return !wordList.contains(word);
+        }
+
+        public boolean isEndToEnd(String word) {
+            String lastWord = getLastWord();
+            return lastWord.substring(lastWord.length() - 1).equals(word.substring(0, 1));
+        }
+
+        private String getLastWord() {
+            return wordList.get(wordList.size() - 1);
+        }
+
+        public void add(String word) {
+            wordList.add(word);
+        }
+
+        public String getRoundOf(int round) {
+            return wordList.get(round);
         }
     }
 }

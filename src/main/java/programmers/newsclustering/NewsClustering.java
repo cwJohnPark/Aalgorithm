@@ -20,6 +20,9 @@ public class NewsClustering {
         int intersection = chunkCount1.getIntersection(chunkCount2);
         int union = chunkCount1.getUnion(chunkCount2);
 
+        if (union == 0 && intersection == 0) {
+            return OFFSET;
+        }
         return (int) (OFFSET * ((double) intersection / union));
     }
 
@@ -75,16 +78,19 @@ public class NewsClustering {
 
         public int getUnion(ChunkCount other) {
             // merge to chunks
-            Stream.concat(
+            return Stream.concat(
+                    chunks.entrySet().stream(),
                     other.chunks.entrySet().stream()
-                    chunks.entrySet()
+            ).collect(
+                    Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            Math::max
+                            ))
+                    .values()
                     .stream()
-                    .map(it -> other.contains(it.getKey()) ?
-                            Math.max(it.getValue(), other.getCount(it.getKey())) :
-
-                            )
                     .mapToInt(Integer::intValue)
-                    .collect(Collectors.toMap());
+                    .sum();
         }
 
         private boolean contains(Chunk key) {
